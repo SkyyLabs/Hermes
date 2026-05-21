@@ -8,7 +8,8 @@ then stored again as an assistant turn.
 Chat writes an event record to `logs/events.jsonl` and a context delta to
 `state/context_deltas.jsonl`. The context uses core memory files only:
 `core.md`, `projects.md`, `preferences.md`, `working_context.md`, and
-`memory_map.md`.
+`memory_map.md`. Those files are background context for chat replies; the model
+is instructed not to draft or update memory from ordinary conversation.
 
 The default provider is Ollama on a loopback URL with `gemma3` configured in
 `configs/model.yaml`. Ollama must be running locally and the configured model must

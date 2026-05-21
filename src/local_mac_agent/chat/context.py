@@ -16,6 +16,7 @@ CORE_MEMORY_FILES = (
     "memory_map.md",
 )
 PLACEHOLDER_REPLY_PREFIX = "Local placeholder response:"
+MEMORY_DRAFT_MARKERS = ("Memory Entries", "`core.md`", "`working_context.md`")
 
 
 class ChatContext(TypedDict):
@@ -43,10 +44,7 @@ class ChatContextBuilder:
         recent_turns = [
             turn
             for turn in self.conversation_store.get_recent_turns(conversation_id, limit)
-            if not (
-                turn["role"] == "assistant"
-                and turn["content"].startswith(PLACEHOLDER_REPLY_PREFIX)
-            )
+            if not _is_legacy_non_chat_assistant_turn(turn)
         ]
         memory_sections = "\n\n".join(
             f"[{file_name}]\n{content.strip()}" for file_name, content in memory.items()
@@ -54,7 +52,17 @@ class ChatContextBuilder:
         history = "\n".join(
             f"{turn['role']}: {turn['content']}" for turn in recent_turns
         )
-        prompt = f"Core memory:\n{memory_sections}\n\nRecent conversation:\n{history}".strip()
+        prompt = f"""You are LocalMacAgent, a local chat assistant.
+Answer the user's latest message directly and conversationally.
+The memory files below are background context only. Do not draft, rewrite,
+analyze, or update memory files unless the user explicitly asks for that.
+Do not describe system internals or roadmap phases unless the user asks.
+
+Memory context:
+{memory_sections}
+
+Recent conversation:
+{history}""".strip()
         return {"memory": memory, "recent_turns": recent_turns, "prompt": prompt}
 
     def write_delta(self, conversation_id: str, context: ChatContext) -> dict[str, object]:
@@ -70,3 +78,12 @@ class ChatContextBuilder:
             handle.write(json.dumps(delta, sort_keys=True, separators=(",", ":")))
             handle.write("\n")
         return delta
+
+
+def _is_legacy_non_chat_assistant_turn(turn: ConversationTurn) -> bool:
+    if turn["role"] != "assistant":
+        return False
+    content = turn["content"]
+    if content.startswith(PLACEHOLDER_REPLY_PREFIX):
+        return True
+    return all(marker in content for marker in MEMORY_DRAFT_MARKERS)

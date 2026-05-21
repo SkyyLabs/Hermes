@@ -54,3 +54,28 @@ def test_context_ignores_legacy_placeholder_assistant_turns(tmp_path: Path) -> N
 
     assert [turn["role"] for turn in context["recent_turns"]] == ["user"]
     assert "Local placeholder response:" not in context["prompt"]
+
+
+def test_context_frames_memory_as_background_and_ignores_memory_drafts(
+    tmp_path: Path,
+) -> None:
+    memory_dir = tmp_path / "memory"
+    _write_memory_files(memory_dir)
+    store = ConversationStore(tmp_path / "state" / "conversations.jsonl")
+    store.append_turn("default", "user", "hey")
+    store.append_turn(
+        "default",
+        "assistant",
+        "Memory Entries: draft `core.md` and `working_context.md` now.",
+    )
+    builder = ChatContextBuilder(
+        memory_dir,
+        store,
+        tmp_path / "state" / "context_deltas.jsonl",
+    )
+
+    context = builder.build("default")
+
+    assert "Answer the user's latest message directly" in context["prompt"]
+    assert "background context only" in context["prompt"]
+    assert [turn["role"] for turn in context["recent_turns"]] == ["user"]
