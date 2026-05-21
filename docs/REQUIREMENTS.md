@@ -11,3 +11,7 @@
 | R-007 | The Phase 0 CLI shall load settings, ensure paths, and support help, classification, and exit only. | D-019, D-020 |
 | R-008 | Cloud features shall remain disabled and isolated to documented future directories. | D-002, D-003, D-004 |
 | R-009 | Future chat, voice, RAG, memory, integrations, and Swift work shall be documented without fake implementations. | D-020, D-021, D-022, D-024, D-025 |
+| R-010 | Text chat shall persist local user and assistant turns and retrieve recent conversation history. | D-002, D-020 |
+| R-011 | Text chat context shall combine curated core memory files with recent local chat turns without RAG or cloud access. | D-002, D-014, D-020, D-022 |
+| R-012 | Text chat shall use a deterministic local placeholder LLM until a real local model phase exists. | D-002, D-024 |
+| R-013 | Text chat shall log handled turns, write context deltas, and expose `chat <message>` in the CLI. | D-018, D-019, D-023 |

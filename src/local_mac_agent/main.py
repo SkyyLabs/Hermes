@@ -2,18 +2,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from local_mac_agent.chat.service import ChatService
 from local_mac_agent.paths import RuntimePaths
 from local_mac_agent.safety import SafetyGuard
 from local_mac_agent.settings import load_settings
 
 
-HELP_TEXT = """LocalMacAgent Phase 0 commands:
+HELP_TEXT = """LocalMacAgent commands:
   help                 Show this help.
+  chat <message>       Add a local text chat turn.
   classify <action>    Classify an action with the safety guard.
   exit                 Exit the development CLI.
 
-Future commands are documented but not implemented yet: chat, voice, command,
-rag, memory, screen, workers, integrations.
+Future commands are documented but not implemented yet: voice, command, rag,
+memory, screen, workers, integrations.
 """
 
 
@@ -23,8 +25,9 @@ def main() -> None:
     paths = RuntimePaths(project_root)
     paths.ensure_directories()
     guard = SafetyGuard()
+    chat_service = ChatService(paths)
 
-    print(f"{settings.app.name} foundation CLI")
+    print(f"{settings.app.name} local CLI")
     print(HELP_TEXT)
     while True:
         try:
@@ -46,7 +49,14 @@ def main() -> None:
             else:
                 print("Usage: classify <action>")
             continue
-        print("Unknown command. Use `help` for available Phase 0 commands.")
+        if command.startswith("chat "):
+            message = command.removeprefix("chat ").strip()
+            if message:
+                print(chat_service.chat(message))
+            else:
+                print("Usage: chat <message>")
+            continue
+        print("Unknown command. Use `help` for available commands.")
 
 
 if __name__ == "__main__":
