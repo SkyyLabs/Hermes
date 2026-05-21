@@ -1,0 +1,2 @@
+cloud_apis_enabled: false
+require_confirmation_for_unknown_actions: true

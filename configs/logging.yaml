@@ -1,0 +1,2 @@
+level: INFO
+jsonl_file: logs/events.jsonl
