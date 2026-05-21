@@ -23,7 +23,7 @@ pip install -e .
 ```
 
 The development CLI currently supports `help`, `chat <message>`,
-`classify <action>`, and `exit`.
+`voice transcript <text>`, `voice listen`, `classify <action>`, and `exit`.
 
 ```text
 > chat hello
@@ -36,3 +36,22 @@ Start Ollama and pull the configured local model before using chat, or set
 `LOCAL_MAC_AGENT_MODEL__MODEL_NAME` in `.env` to another local Ollama model.
 Set `LOCAL_MAC_AGENT_MODEL__PROVIDER=placeholder` only when a deterministic test
 or development response is preferred over real model output.
+
+Voice transcript routing speaks the chat response through macOS TTS:
+
+```text
+> voice transcript summarize my notes
+```
+
+`voice listen` uses the microphone, openWakeWord `Hey Mycroft`, and local Whisper
+STT. Install the voice dependencies, allow microphone access for the terminal or
+app running LocalMacAgent, make the local Whisper model available, download the
+openWakeWord built-in models when needed, and keep Ollama running for chat
+responses:
+
+```bash
+python -c "import openwakeword; openwakeword.utils.download_models(['hey_mycroft'])"
+```
+
+openWakeWord's included pretrained models have separate model-license terms;
+review them before redistribution.

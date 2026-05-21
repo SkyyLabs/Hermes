@@ -14,3 +14,6 @@
 | T-010 | Build local chat context from core memory and recent turns. | R-011 | Done |
 | T-011 | Add local chat response service, Ollama default provider, placeholder test provider, and context deltas. | R-012, R-013 | Done |
 | T-012 | Expose the text chat CLI command and update Phase 1 docs and tests. | R-013 | Done |
+| T-013 | Add voice settings, microphone capture, wake detection, local STT, and macOS TTS adapters. | R-015, R-016 | Done |
+| T-014 | Add VoiceService transcript routing and active silence-window listening flow. | R-014, R-015 | Done |
+| T-015 | Expose voice CLI commands and update Phase 2 docs, traceability, and tests. | R-016 | Done |

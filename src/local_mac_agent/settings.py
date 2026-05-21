@@ -41,6 +41,20 @@ class LoggingSettings(BaseModel):
     jsonl_file: str = "logs/events.jsonl"
 
 
+class VoiceSettings(BaseModel):
+    wake_word: str = "hey_mycroft"
+    wake_threshold: float = 0.5
+    whisper_model: str = "base.en"
+    sample_rate: int = 16000
+    frame_ms: int = 80
+    speech_threshold: int = 350
+    utterance_silence_seconds: float = 1.0
+    active_listening_seconds: float = 4.0
+    max_utterance_seconds: float = 20.0
+    tts_voice: str | None = None
+    tts_rate: int | None = None
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -55,6 +69,7 @@ class Settings(BaseSettings):
     rag: RagSettings = Field(default_factory=RagSettings)
     memory: MemorySettings = Field(default_factory=MemorySettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
+    voice: VoiceSettings = Field(default_factory=VoiceSettings)
 
 
 _CONFIG_MODELS = {
@@ -64,6 +79,7 @@ _CONFIG_MODELS = {
     "rag": RagSettings,
     "memory": MemorySettings,
     "logging": LoggingSettings,
+    "voice": VoiceSettings,
 }
 
 

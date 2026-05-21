@@ -16,6 +16,8 @@ def test_load_settings_uses_safe_defaults(tmp_path: Path) -> None:
     assert settings.model.provider == "ollama"
     assert settings.model.model_name == "gemma3"
     assert settings.model.local_only is True
+    assert settings.voice.wake_word == "hey_mycroft"
+    assert settings.voice.sample_rate == 16000
     assert settings.safety.cloud_apis_enabled is False
 
 

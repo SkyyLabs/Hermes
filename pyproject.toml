@@ -13,6 +13,10 @@ dependencies = [
   "pydantic",
   "pydantic-settings",
   "PyYAML",
+  "numpy",
+  "sounddevice",
+  "openai-whisper",
+  "openwakeword",
 ]
 
 [project.optional-dependencies]

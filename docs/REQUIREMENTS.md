@@ -15,3 +15,6 @@
 | R-011 | Text chat context shall combine curated core memory files with recent local chat turns without RAG or cloud access. | D-002, D-014, D-020, D-022 |
 | R-012 | Text chat shall use a loopback Ollama provider by default and keep deterministic placeholder responses for tests and explicit development overrides. | D-002, D-024 |
 | R-013 | Text chat shall log handled turns, write context deltas, and expose `chat <message>` in the CLI. | D-018, D-019, D-023 |
+| R-014 | Voice shall route transcripts to chat, preserve conversation IDs, speak assistant text, and return the text response. | D-002, D-019, D-021 |
+| R-015 | Voice listening shall use microphone frames, wake detection, local STT, and silence-based utterance capture. | D-002, D-021, D-024 |
+| R-016 | Voice CLI and docs shall expose transcript and listen paths while documenting voice setup and wake-model constraints. | D-001, D-021, D-023 |

@@ -1,0 +1,11 @@
+wake_word: hey_mycroft
+wake_threshold: 0.5
+whisper_model: base.en
+sample_rate: 16000
+frame_ms: 80
+speech_threshold: 350
+utterance_silence_seconds: 1.0
+active_listening_seconds: 4.0
+max_utterance_seconds: 20.0
+tts_voice:
+tts_rate:

@@ -2,3 +2,7 @@ pydantic
 pydantic-settings
 pyyaml
 pytest
+numpy
+sounddevice
+openai-whisper
+openwakeword

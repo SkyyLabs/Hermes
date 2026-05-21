@@ -22,3 +22,6 @@
 | Phase 17 | Observability and Storage |
 | Phase 18 | MCP and n8n |
 | Phase 19 | Production Hardening |
+
+Phase 2 uses the first real voice runtime path: microphone listening,
+openWakeWord activation, local Whisper STT, and macOS TTS.
