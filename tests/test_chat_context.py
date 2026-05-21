@@ -76,6 +76,6 @@ def test_context_frames_memory_as_background_and_ignores_memory_drafts(
 
     context = builder.build("default")
 
-    assert "Answer the user's latest message directly" in context["prompt"]
+    assert "Answer the final user message directly" in context["prompt"]
     assert "background context only" in context["prompt"]
     assert [turn["role"] for turn in context["recent_turns"]] == ["user"]

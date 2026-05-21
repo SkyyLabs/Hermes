@@ -21,7 +21,7 @@ class _Response:
         return self.payload.read()
 
 
-def test_ollama_llm_posts_local_chat_request(monkeypatch) -> None:
+def test_ollama_llm_posts_current_message_after_history(monkeypatch) -> None:
     requests = []
 
     def fake_urlopen(request, timeout):
@@ -52,7 +52,51 @@ def test_ollama_llm_posts_local_chat_request(monkeypatch) -> None:
     assert payload["model"] == "gemma3"
     assert payload["stream"] is False
     assert payload["messages"][0] == {"role": "system", "content": "Local context"}
-    assert payload["messages"][1]["content"] == "hello"
+    assert payload["messages"][1:] == [{"role": "user", "content": "hello"}]
+
+
+def test_ollama_llm_keeps_prior_history_before_current_message(monkeypatch) -> None:
+    requests = []
+
+    def fake_urlopen(request, timeout):
+        requests.append(request)
+        return _Response({"message": {"content": "Five."}})
+
+    monkeypatch.setattr("local_mac_agent.chat.llm.urlopen", fake_urlopen)
+    llm = OllamaLocalLLM("gemma3")
+    context = {
+        "memory": {},
+        "prompt": "Local context",
+        "recent_turns": [
+            {
+                "timestamp": "2026-05-21T12:00:00+00:00",
+                "conversation_id": "default",
+                "role": "user",
+                "content": "hows life",
+            },
+            {
+                "timestamp": "2026-05-21T12:00:01+00:00",
+                "conversation_id": "default",
+                "role": "assistant",
+                "content": "Doing well.",
+            },
+            {
+                "timestamp": "2026-05-21T12:00:02+00:00",
+                "conversation_id": "default",
+                "role": "user",
+                "content": "whats 3 + 2",
+            },
+        ],
+    }
+
+    llm.respond("whats 3 + 2", context)
+
+    payload = json.loads(requests[0].data.decode("utf-8"))
+    assert payload["messages"][1:] == [
+        {"role": "user", "content": "hows life"},
+        {"role": "assistant", "content": "Doing well."},
+        {"role": "user", "content": "whats 3 + 2"},
+    ]
 
 
 def test_ollama_local_only_rejects_remote_base_url() -> None:

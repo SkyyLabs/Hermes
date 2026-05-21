@@ -35,10 +35,9 @@ class OllamaLocalLLM:
                 "role": turn["role"],
                 "content": turn["content"],
             }
-            for turn in context["recent_turns"]
+            for turn in _history_before_current_message(message, context)
         )
-        if not context["recent_turns"]:
-            messages.append({"role": "user", "content": message})
+        messages.append({"role": "user", "content": message})
 
         request = Request(
             f"{self.base_url}/api/chat",
@@ -82,3 +81,11 @@ def _is_loopback_url(base_url: str) -> bool:
         "::1",
         "localhost",
     }
+
+
+def _history_before_current_message(message: str, context: ChatContext):
+    recent_turns = context["recent_turns"]
+    if recent_turns and recent_turns[-1]["role"] == "user":
+        if recent_turns[-1]["content"] == message:
+            return recent_turns[:-1]
+    return recent_turns

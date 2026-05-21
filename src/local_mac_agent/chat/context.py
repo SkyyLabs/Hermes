@@ -49,20 +49,14 @@ class ChatContextBuilder:
         memory_sections = "\n\n".join(
             f"[{file_name}]\n{content.strip()}" for file_name, content in memory.items()
         )
-        history = "\n".join(
-            f"{turn['role']}: {turn['content']}" for turn in recent_turns
-        )
         prompt = f"""You are LocalMacAgent, a local chat assistant.
-Answer the user's latest message directly and conversationally.
+Answer the final user message directly and conversationally.
 The memory files below are background context only. Do not draft, rewrite,
 analyze, or update memory files unless the user explicitly asks for that.
 Do not describe system internals or roadmap phases unless the user asks.
 
 Memory context:
-{memory_sections}
-
-Recent conversation:
-{history}""".strip()
+{memory_sections}""".strip()
         return {"memory": memory, "recent_turns": recent_turns, "prompt": prompt}
 
     def write_delta(self, conversation_id: str, context: ChatContext) -> dict[str, object]:
