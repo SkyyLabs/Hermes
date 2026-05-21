@@ -197,10 +197,15 @@ class VoiceService:
                 continue
             if not _has_speech(frame, self.settings.speech_threshold):
                 continue
-            turn = self._process_audio(
-                _capture_utterance(frame, frames, self.settings),
-                conversation_id,
-            )
+            try:
+                turn = self._process_audio(
+                    _capture_utterance(frame, frames, self.settings),
+                    conversation_id,
+                )
+            except RuntimeError as exc:
+                print(f"\nVoice turn skipped: {exc}")
+                active_until = None
+                continue
             if turn.transcript:
                 active_until = self.clock() + self.settings.active_listening_seconds
 

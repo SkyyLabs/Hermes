@@ -39,6 +39,15 @@ class _STT:
         return self.transcripts.pop(0)
 
 
+class _FailingSTT:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def transcribe(self, audio: bytes) -> str:
+        self.calls += 1
+        raise RuntimeError("Whisper did not produce a transcript.")
+
+
 class _Wake:
     def __init__(self, values: list[bool]) -> None:
         self.values = values
@@ -145,6 +154,38 @@ def test_listener_returns_to_wake_after_active_silence_timeout() -> None:
 
     service.listen_forever()
 
+    assert len(wake.seen) == 2
+
+
+def test_listener_recovers_after_empty_stt_turn() -> None:
+    settings = VoiceSettings(
+        frame_ms=100,
+        utterance_silence_seconds=0.1,
+        active_listening_seconds=3.0,
+    )
+    microphone = _Microphone(
+        [
+            _frame(0),
+            _frame(1200),
+            _frame(0),
+            _frame(0),
+        ]
+    )
+    wake = _Wake([True, False])
+    stt = _FailingSTT()
+    service = VoiceService(
+        _Chat(),
+        settings,
+        microphone=microphone,
+        wake_detector=wake,
+        stt=stt,
+        tts=_TTS(),
+        clock=_Clock([0.0, 0.1]),
+    )
+
+    service.listen_forever()
+
+    assert stt.calls == 1
     assert len(wake.seen) == 2
 
 

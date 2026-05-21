@@ -10,6 +10,8 @@ After a spoken reply, the conversation remains active for a short configurable
 silence window. Follow-up speech inside that window is transcribed without
 requiring another wake phrase. When that window expires, the listener returns to
 waiting for `Hey Mycroft`.
+If STT cannot produce a transcript for a captured voice turn, the turn is skipped
+and the listener returns to wake-word mode instead of shutting down.
 
 `voice transcript <text>` bypasses microphone capture, wake detection, and STT,
 but it still routes through the same voice service and performs TTS. That keeps a
