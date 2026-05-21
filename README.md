@@ -5,7 +5,7 @@ Phase 0 provides the repository foundation. Phase 1 adds a local text chat loop
 with persisted JSONL conversation history, compact core-memory context, and a
 real local Ollama backend by default.
 
-Future phases will add voice, commands, RAG, memory routing, screen context, app
+Future phases will add commands, RAG, memory routing, screen context, app
 integrations, optional cloud-safe workflows, and a Swift native shell. Those
 features are documented but not implemented yet.
 
@@ -22,11 +22,11 @@ pip install -e .
 ./scripts/run_dev.sh
 ```
 
-The development CLI currently supports `help`, `chat <message>`,
-`voice transcript <text>`, `voice listen`, `classify <action>`, and `exit`.
+The development CLI accepts plain typed messages plus `help`,
+`voice transcript <text>`, `classify <action>`, and `exit`.
 
 ```text
-> chat hello
+> hello
 <local Ollama model response>
 ```
 
@@ -43,11 +43,12 @@ Voice transcript routing speaks the chat response through macOS TTS:
 > voice transcript summarize my notes
 ```
 
-`voice listen` uses the microphone, openWakeWord `Hey Mycroft`, and local Whisper
-STT. Install the voice dependencies, allow microphone access for the terminal or
-app running LocalMacAgent, make the local Whisper model available, download the
-openWakeWord built-in models when needed, and keep Ollama running for chat
-responses:
+Wake listening starts with the CLI. Say `Hey Mycroft` to use the microphone,
+openWakeWord, and local Whisper STT. Typed text and spoken turns share the same
+default conversation context, so they can be mixed freely. Install the voice
+dependencies, allow microphone access for the terminal or app running
+LocalMacAgent, make the local Whisper model available, download the openWakeWord
+built-in models when needed, and keep Ollama running for chat responses:
 
 ```bash
 python -c "import openwakeword; openwakeword.utils.download_models(['hey_mycroft'])"

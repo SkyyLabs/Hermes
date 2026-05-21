@@ -1,6 +1,9 @@
 from array import array
 
+from local_mac_agent.chat.context import CORE_MEMORY_FILES, ChatContext
+from local_mac_agent.chat.service import ChatService
 from local_mac_agent.main import HELP_TEXT
+from local_mac_agent.paths import RuntimePaths
 from local_mac_agent.settings import VoiceSettings
 from local_mac_agent.voice.service import VoiceService, _capture_utterance
 
@@ -146,7 +149,32 @@ def test_listener_returns_to_wake_after_active_silence_timeout() -> None:
 
 
 def test_cli_help_keeps_chat_classify_and_voice_commands() -> None:
-    assert "chat <message>" in HELP_TEXT
+    assert "<message>" in HELP_TEXT
     assert "voice transcript <text>" in HELP_TEXT
-    assert "voice listen" in HELP_TEXT
+    assert "Wake listening for Hey Mycroft starts" in HELP_TEXT
     assert "classify <action>" in HELP_TEXT
+
+
+def test_voice_and_typed_chat_share_default_conversation(tmp_path) -> None:
+    paths = RuntimePaths(tmp_path)
+    paths.ensure_directories()
+    for file_name in CORE_MEMORY_FILES:
+        (paths.memory / file_name).write_text(f"{file_name} content", encoding="utf-8")
+
+    class _LLM:
+        def respond(self, message: str, context: ChatContext) -> str:
+            return f"{message}:{len(context['recent_turns'])}"
+
+    chat = ChatService(paths, llm=_LLM())
+    voice = VoiceService(chat, VoiceSettings(), tts=_TTS())
+
+    typed_response = chat.chat("typed turn")
+    voice_response = voice.process_transcript("spoken turn")
+    turns = chat.conversation_store.get_recent_turns("default")
+
+    assert typed_response == "typed turn:1"
+    assert voice_response == "spoken turn:3"
+    assert [turn["content"] for turn in turns if turn["role"] == "user"] == [
+        "typed turn",
+        "spoken turn",
+    ]

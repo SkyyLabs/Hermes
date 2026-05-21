@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from threading import Lock
 from pathlib import Path
 
 from local_mac_agent.chat.context import ChatContextBuilder
@@ -32,19 +33,21 @@ class ChatService:
         )
         self.llm = llm or OllamaLocalLLM("gemma3")
         self.log_path = log_path or paths.logs / "events.jsonl"
+        self._turn_lock = Lock()
 
     def chat(self, message: str, conversation_id: str = DEFAULT_CONVERSATION_ID) -> str:
-        self.conversation_store.append_turn(conversation_id, "user", message)
-        context = self.context_builder.build(conversation_id)
-        response = self.llm.respond(message, context)
-        self.conversation_store.append_turn(conversation_id, "assistant", response)
-        write_event(
-            self.log_path,
-            "chat_turn",
-            {
-                "conversation_id": conversation_id,
-                "recent_turn_count": len(context["recent_turns"]),
-            },
-        )
-        self.context_builder.write_delta(conversation_id, context)
-        return response
+        with self._turn_lock:
+            self.conversation_store.append_turn(conversation_id, "user", message)
+            context = self.context_builder.build(conversation_id)
+            response = self.llm.respond(message, context)
+            self.conversation_store.append_turn(conversation_id, "assistant", response)
+            write_event(
+                self.log_path,
+                "chat_turn",
+                {
+                    "conversation_id": conversation_id,
+                    "recent_turn_count": len(context["recent_turns"]),
+                },
+            )
+            self.context_builder.write_delta(conversation_id, context)
+            return response

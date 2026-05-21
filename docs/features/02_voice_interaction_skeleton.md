@@ -2,7 +2,7 @@
 
 ## Implemented
 
-- Real microphone-listen path for macOS through `voice listen`
+- Real microphone listen path for macOS started with the CLI
 - Built-in openWakeWord `Hey Mycroft` activation
 - Silence-bounded local utterance capture
 - Local Whisper STT adapter
@@ -10,6 +10,7 @@
 - macOS `say` TTS output
 - Post-reply active listening window for wake-free follow-up speech
 - Transcript CLI fallback through `voice transcript <text>`
+- Shared default conversation context across typed and spoken turns
 
 ## Limitations
 

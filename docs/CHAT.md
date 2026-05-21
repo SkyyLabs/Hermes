@@ -1,7 +1,7 @@
 # Chat
 
-Phase 1 implements a local text chat loop. A `chat <message>` CLI input is stored
-as a user turn in `state/conversations.jsonl`, combined with recent local history
+Phase 1 implements a local text chat loop. A plain typed CLI message is stored as
+a user turn in `state/conversations.jsonl`, combined with recent local history
 and the curated Markdown files in `memory/`, passed to the configured local model,
 then stored again as an assistant turn.
 
@@ -19,3 +19,5 @@ reports that configuration failure instead of generating a synthetic reply.
 The Ollama adapter rejects remote base URLs and explicit Ollama cloud model names
 while `local_only` is true. Voice, command automation, RAG, memory routing,
 screen context, workers, and app integrations remain later phases.
+Voice transcripts reuse the same default conversation ID as typed chat turns so
+text and audio history carry forward together.

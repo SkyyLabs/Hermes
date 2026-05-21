@@ -1,10 +1,10 @@
 # Voice
 
-Phase 2 provides the local voice interaction path for macOS. `voice listen`
-opens the microphone, waits for openWakeWord `Hey Mycroft`, captures an utterance
-until trailing silence, transcribes the captured audio with local Whisper, routes
-the transcript through `ChatService`, and speaks the assistant reply through the
-macOS `say` command.
+Phase 2 provides the local voice interaction path for macOS. The CLI starts
+listening when it starts, waits for openWakeWord `Hey Mycroft`, captures an
+utterance until trailing silence, transcribes the captured audio with local
+Whisper, routes the transcript through `ChatService`, and speaks the assistant
+reply through the macOS `say` command.
 
 After a spoken reply, the conversation remains active for a short configurable
 silence window. Follow-up speech inside that window is transcribed without
@@ -14,6 +14,8 @@ waiting for `Hey Mycroft`.
 `voice transcript <text>` bypasses microphone capture, wake detection, and STT,
 but it still routes through the same voice service and performs TTS. That keeps a
 manual fallback for transcript routing and deterministic verification.
+Typed messages and spoken messages use the same default conversation ID and the
+same `ChatService` instance, so recent context carries across text and audio.
 
 ## Boundaries
 
