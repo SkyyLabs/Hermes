@@ -44,11 +44,11 @@ class LoggingSettings(BaseModel):
 class VoiceSettings(BaseModel):
     wake_word: str = "hey_mycroft"
     wake_threshold: float = 0.5
-    whisper_model: str = "base.en"
+    whisper_model: str = "tiny.en"
     sample_rate: int = 16000
     frame_ms: int = 80
     speech_threshold: int = 350
-    utterance_silence_seconds: float = 1.0
+    utterance_silence_seconds: float = 0.45
     active_listening_seconds: float = 4.0
     max_utterance_seconds: float = 20.0
     tts_voice: str | None = None

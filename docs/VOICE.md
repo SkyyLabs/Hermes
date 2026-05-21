@@ -26,7 +26,10 @@ same `ChatService` instance, so recent context carries across text and audio.
   `python -c "import openwakeword; openwakeword.utils.download_models(['hey_mycroft'])"`
   if they are not already present.
 - STT uses local Whisper and may download a configured model if it is not already
-  available in the local runtime cache.
+  available in the local runtime cache. The default is `tiny.en` for lower
+  latency; larger Whisper models trade response speed for accuracy. The listener
+  warms the configured Whisper model on startup so model load does not sit on the
+  first spoken turn when warmup finishes before activation.
 - TTS uses macOS `say`.
 - Chat replies remain local through the configured `ChatService` model backend.
 

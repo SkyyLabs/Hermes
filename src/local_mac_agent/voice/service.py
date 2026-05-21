@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from time import monotonic
-from typing import Protocol
+from typing import Any, Protocol
 from wave import open as open_wave
 
 from local_mac_agent.chat.service import DEFAULT_CONVERSATION_ID
@@ -107,7 +107,20 @@ class WhisperSpeechToText:
         self.settings = settings
         self.model = None
 
+    def prepare(self) -> None:
+        self._load_model()
+
     def transcribe(self, audio: bytes) -> str:
+        model = self._load_model()
+        with NamedTemporaryFile(suffix=".wav") as audio_file:
+            _write_wav(audio_file.name, audio, self.settings.sample_rate)
+            result = model.transcribe(audio_file.name, fp16=False)
+        text = str(result.get("text", "")).strip()
+        if not text:
+            raise RuntimeError("Whisper did not produce a transcript.")
+        return text
+
+    def _load_model(self) -> Any:
         try:
             import whisper
         except ImportError as exc:
@@ -115,13 +128,7 @@ class WhisperSpeechToText:
 
         if self.model is None:
             self.model = whisper.load_model(self.settings.whisper_model)
-        with NamedTemporaryFile(suffix=".wav") as audio_file:
-            _write_wav(audio_file.name, audio, self.settings.sample_rate)
-            result = self.model.transcribe(audio_file.name, fp16=False)
-        text = str(result.get("text", "")).strip()
-        if not text:
-            raise RuntimeError("Whisper did not produce a transcript.")
-        return text
+        return self.model
 
 
 class MacOSTextToSpeech:
@@ -176,6 +183,8 @@ class VoiceService:
 
     def listen_forever(self, conversation_id: str = DEFAULT_CONVERSATION_ID) -> None:
         detector = self.wake_detector or OpenWakeWordDetector(self.settings)
+        if isinstance(self.stt, WhisperSpeechToText):
+            self.stt.prepare()
         frames = self.microphone.frames()
         active_until: float | None = None
         for frame in frames:

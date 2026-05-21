@@ -56,3 +56,7 @@ python -c "import openwakeword; openwakeword.utils.download_models(['hey_mycroft
 
 openWakeWord's included pretrained models have separate model-license terms;
 review them before redistribution.
+
+Voice defaults to Whisper `tiny.en` and a short trailing-silence cutoff for
+lower latency. Override `LOCAL_MAC_AGENT_VOICE__WHISPER_MODEL` for a larger model
+when accuracy matters more than response speed.

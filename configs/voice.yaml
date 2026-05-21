@@ -1,10 +1,10 @@
 wake_word: hey_mycroft
 wake_threshold: 0.5
-whisper_model: base.en
+whisper_model: tiny.en
 sample_rate: 16000
 frame_ms: 80
 speech_threshold: 350
-utterance_silence_seconds: 1.0
+utterance_silence_seconds: 0.45
 active_listening_seconds: 4.0
 max_utterance_seconds: 20.0
 tts_voice:
