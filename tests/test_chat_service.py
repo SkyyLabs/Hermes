@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from local_mac_agent.chat.context import CORE_MEMORY_FILES
+from local_mac_agent.chat.llm import DefaultLocalLLM
 from local_mac_agent.chat.service import ChatService
 from local_mac_agent.paths import RuntimePaths
 
@@ -16,7 +17,7 @@ def _create_paths(tmp_path: Path) -> RuntimePaths:
 
 def test_chat_service_persists_turns_logs_and_context_delta(tmp_path: Path) -> None:
     paths = _create_paths(tmp_path)
-    service = ChatService(paths)
+    service = ChatService(paths, llm=DefaultLocalLLM())
 
     response = service.chat("hello")
 
@@ -41,6 +42,6 @@ def test_default_chat_service_stays_local(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setattr("socket.create_connection", fail)
 
-    response = ChatService(paths).chat("stay local")
+    response = ChatService(paths, llm=DefaultLocalLLM()).chat("stay local")
 
     assert "stay local" in response

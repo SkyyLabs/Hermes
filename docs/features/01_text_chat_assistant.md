@@ -6,11 +6,12 @@
 - Local JSONL storage for user and assistant turns
 - Recent local history retrieval for compact context
 - Core memory loading from the five existing Markdown memory files
-- Deterministic placeholder local LLM responses
+- Loopback Ollama chat responses by default
+- Deterministic placeholder responses for tests and explicit development overrides
 - Chat event logs and per-turn context delta records
 
 ## Limitations
 
-The current LLM is a deterministic placeholder. Conversation selection, real
-local model integration, voice, command routing, RAG, memory routing, screen
-context, workers, cloud-safe mode, and app integrations remain future phases.
+Conversation selection, model download/management, voice, command routing, RAG,
+memory routing, screen context, workers, cloud-safe mode, and app integrations
+remain future phases.

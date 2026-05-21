@@ -2,14 +2,19 @@
 
 Phase 1 implements a local text chat loop. A `chat <message>` CLI input is stored
 as a user turn in `state/conversations.jsonl`, combined with recent local history
-and the curated Markdown files in `memory/`, passed to a deterministic local
-placeholder LLM, then stored again as an assistant turn.
+and the curated Markdown files in `memory/`, passed to the configured local model,
+then stored again as an assistant turn.
 
 Chat writes an event record to `logs/events.jsonl` and a context delta to
 `state/context_deltas.jsonl`. The context uses core memory files only:
 `core.md`, `projects.md`, `preferences.md`, `working_context.md`, and
 `memory_map.md`.
 
-The placeholder LLM does not call cloud APIs and does not require Ollama. Voice,
-command automation, RAG, memory routing, screen context, workers, and app
-integrations remain later phases.
+The default provider is Ollama on a loopback URL with `gemma3` configured in
+`configs/model.yaml`. Ollama must be running locally and the configured model must
+be available. The `placeholder` provider stays available for deterministic tests
+and explicit development overrides.
+
+The Ollama adapter rejects remote base URLs and explicit Ollama cloud model names
+while `local_only` is true. Voice, command automation, RAG, memory routing,
+screen context, workers, and app integrations remain later phases.

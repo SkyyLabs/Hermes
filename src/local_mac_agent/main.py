@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from local_mac_agent.chat.llm import build_local_llm
 from local_mac_agent.chat.service import ChatService
 from local_mac_agent.paths import RuntimePaths
 from local_mac_agent.safety import SafetyGuard
@@ -25,7 +26,7 @@ def main() -> None:
     paths = RuntimePaths(project_root)
     paths.ensure_directories()
     guard = SafetyGuard()
-    chat_service = ChatService(paths)
+    chat_service = ChatService(paths, llm=build_local_llm(settings.model))
 
     print(f"{settings.app.name} local CLI")
     print(HELP_TEXT)
@@ -52,7 +53,10 @@ def main() -> None:
         if command.startswith("chat "):
             message = command.removeprefix("chat ").strip()
             if message:
-                print(chat_service.chat(message))
+                try:
+                    print(chat_service.chat(message))
+                except RuntimeError as exc:
+                    print(f"Chat failed: {exc}")
             else:
                 print("Usage: chat <message>")
             continue

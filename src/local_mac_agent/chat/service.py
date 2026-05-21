@@ -4,7 +4,7 @@ from pathlib import Path
 
 from local_mac_agent.chat.context import ChatContextBuilder
 from local_mac_agent.chat.conversation_store import ConversationStore
-from local_mac_agent.chat.llm import DefaultLocalLLM
+from local_mac_agent.chat.llm import LocalLLM, OllamaLocalLLM
 from local_mac_agent.logging_utils import write_event
 from local_mac_agent.paths import RuntimePaths
 
@@ -16,7 +16,7 @@ class ChatService:
     def __init__(
         self,
         paths: RuntimePaths,
-        llm: DefaultLocalLLM | None = None,
+        llm: LocalLLM | None = None,
         conversation_store: ConversationStore | None = None,
         context_builder: ChatContextBuilder | None = None,
         log_path: Path | None = None,
@@ -30,7 +30,7 @@ class ChatService:
             self.conversation_store,
             paths.state / "context_deltas.jsonl",
         )
-        self.llm = llm or DefaultLocalLLM()
+        self.llm = llm or OllamaLocalLLM("gemma3")
         self.log_path = log_path or paths.logs / "events.jsonl"
 
     def chat(self, message: str, conversation_id: str = DEFAULT_CONVERSATION_ID) -> str:

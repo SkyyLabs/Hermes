@@ -15,8 +15,9 @@ class AppSettings(BaseModel):
 
 
 class ModelSettings(BaseModel):
-    provider: str = "local"
-    model_name: str = "not_configured"
+    provider: str = "ollama"
+    model_name: str = "gemma3"
+    base_url: str = "http://127.0.0.1:11434"
     local_only: bool = True
 
 

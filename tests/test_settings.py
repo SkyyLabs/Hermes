@@ -13,6 +13,8 @@ def test_load_settings_uses_safe_defaults(tmp_path: Path) -> None:
     settings = load_settings(tmp_path)
 
     assert settings.app.name == "LocalMacAgent"
+    assert settings.model.provider == "ollama"
+    assert settings.model.model_name == "gemma3"
     assert settings.model.local_only is True
     assert settings.safety.cloud_apis_enabled is False
 
