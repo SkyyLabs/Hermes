@@ -1,8 +1,7 @@
 import json
 from pathlib import Path
 
-from local_mac_agent.chat.context import CORE_MEMORY_FILES
-from local_mac_agent.chat.llm import DefaultLocalLLM
+from local_mac_agent.chat.context import CORE_MEMORY_FILES, ChatContext
 from local_mac_agent.chat.service import ChatService
 from local_mac_agent.paths import RuntimePaths
 
@@ -15,9 +14,14 @@ def _create_paths(tmp_path: Path) -> RuntimePaths:
     return paths
 
 
+class _LLM:
+    def respond(self, message: str, context: ChatContext) -> str:
+        return f"test response:{message}:{len(context['recent_turns'])}"
+
+
 def test_chat_service_persists_turns_logs_and_context_delta(tmp_path: Path) -> None:
     paths = _create_paths(tmp_path)
-    service = ChatService(paths, llm=DefaultLocalLLM())
+    service = ChatService(paths, llm=_LLM())
 
     response = service.chat("hello")
 
@@ -26,7 +30,7 @@ def test_chat_service_persists_turns_logs_and_context_delta(tmp_path: Path) -> N
     delta_record = json.loads(
         (paths.state / "context_deltas.jsonl").read_text(encoding="utf-8")
     )
-    assert response.startswith("Local placeholder response:")
+    assert response.startswith("test response:")
     assert [turn["role"] for turn in turns] == ["user", "assistant"]
     assert turns[0]["content"] == "hello"
     assert turns[1]["content"] == response
@@ -34,7 +38,7 @@ def test_chat_service_persists_turns_logs_and_context_delta(tmp_path: Path) -> N
     assert delta_record["source"] == "chat_turn"
 
 
-def test_default_chat_service_stays_local(tmp_path: Path, monkeypatch) -> None:
+def test_test_chat_service_stays_local(tmp_path: Path, monkeypatch) -> None:
     paths = _create_paths(tmp_path)
 
     def fail(*args, **kwargs):
@@ -42,6 +46,6 @@ def test_default_chat_service_stays_local(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setattr("socket.create_connection", fail)
 
-    response = ChatService(paths, llm=DefaultLocalLLM()).chat("stay local")
+    response = ChatService(paths, llm=_LLM()).chat("stay local")
 
     assert "stay local" in response

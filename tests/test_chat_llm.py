@@ -65,9 +65,7 @@ def test_ollama_local_only_rejects_cloud_model_name() -> None:
         OllamaLocalLLM("gpt-oss:120b-cloud")
 
 
-def test_model_settings_choose_ollama_or_placeholder() -> None:
+def test_model_settings_require_ollama_provider() -> None:
     assert isinstance(build_local_llm(ModelSettings()), OllamaLocalLLM)
-    assert build_local_llm(ModelSettings(provider="placeholder")).respond(
-        "hello",
-        {"memory": {}, "prompt": "", "recent_turns": []},
-    ).startswith("Local placeholder response:")
+    with pytest.raises(ValueError, match="No LLM configured"):
+        build_local_llm(ModelSettings(provider="placeholder"))

@@ -7,7 +7,7 @@
 - Recent local history retrieval for compact context
 - Core memory loading from the five existing Markdown memory files
 - Loopback Ollama chat responses by default
-- Deterministic placeholder responses for tests and explicit development overrides
+- Clear missing-LLM failures instead of synthetic assistant responses
 - Chat event logs and per-turn context delta records
 
 ## Limitations

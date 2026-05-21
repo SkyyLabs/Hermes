@@ -12,8 +12,8 @@ Chat writes an event record to `logs/events.jsonl` and a context delta to
 
 The default provider is Ollama on a loopback URL with `gemma3` configured in
 `configs/model.yaml`. Ollama must be running locally and the configured model must
-be available. The `placeholder` provider stays available for deterministic tests
-and explicit development overrides.
+be available. If no supported LLM is configured or Ollama is unavailable, chat
+reports that configuration failure instead of generating a synthetic reply.
 
 The Ollama adapter rejects remote base URLs and explicit Ollama cloud model names
 while `local_only` is true. Voice, command automation, RAG, memory routing,

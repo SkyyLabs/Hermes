@@ -15,6 +15,7 @@ CORE_MEMORY_FILES = (
     "working_context.md",
     "memory_map.md",
 )
+PLACEHOLDER_REPLY_PREFIX = "Local placeholder response:"
 
 
 class ChatContext(TypedDict):
@@ -39,7 +40,14 @@ class ChatContextBuilder:
             file_name: (self.memory_dir / file_name).read_text(encoding="utf-8")
             for file_name in CORE_MEMORY_FILES
         }
-        recent_turns = self.conversation_store.get_recent_turns(conversation_id, limit)
+        recent_turns = [
+            turn
+            for turn in self.conversation_store.get_recent_turns(conversation_id, limit)
+            if not (
+                turn["role"] == "assistant"
+                and turn["content"].startswith(PLACEHOLDER_REPLY_PREFIX)
+            )
+        ]
         memory_sections = "\n\n".join(
             f"[{file_name}]\n{content.strip()}" for file_name, content in memory.items()
         )

@@ -30,7 +30,12 @@ def main() -> None:
     paths = RuntimePaths(project_root)
     paths.ensure_directories()
     guard = SafetyGuard()
-    chat_service = ChatService(paths, llm=build_local_llm(settings.model))
+    try:
+        llm = build_local_llm(settings.model)
+    except ValueError as exc:
+        print(exc)
+        return
+    chat_service = ChatService(paths, llm=llm)
     voice_service = VoiceService(chat_service, settings.voice)
 
     print(f"{settings.app.name} local CLI")

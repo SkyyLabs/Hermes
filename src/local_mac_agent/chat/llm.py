@@ -14,17 +14,6 @@ class LocalLLM(Protocol):
     def respond(self, message: str, context: ChatContext) -> str: ...
 
 
-class DefaultLocalLLM:
-    """Deterministic local placeholder for tests and explicit dev configuration."""
-
-    def respond(self, message: str, context: ChatContext) -> str:
-        history_count = len(context["recent_turns"])
-        return (
-            "Local placeholder response: "
-            f"received '{message}' with {history_count} recent turn(s) in context."
-        )
-
-
 class OllamaLocalLLM:
     def __init__(
         self,
@@ -66,7 +55,7 @@ class OllamaLocalLLM:
             raise RuntimeError(f"Ollama chat request failed with HTTP {exc.code}.") from exc
         except URLError as exc:
             raise RuntimeError(
-                "Ollama is unavailable. Start Ollama and pull the configured model."
+                "No LLM configured. Start Ollama and pull the configured model."
             ) from exc
 
         content = payload.get("message", {}).get("content")
@@ -83,9 +72,7 @@ def build_local_llm(settings: ModelSettings) -> LocalLLM:
             base_url=settings.base_url,
             local_only=settings.local_only,
         )
-    if provider in {"placeholder", "default"}:
-        return DefaultLocalLLM()
-    raise ValueError(f"Unsupported local model provider: {settings.provider}")
+    raise ValueError(f"No LLM configured for provider: {settings.provider}")
 
 
 def _is_loopback_url(base_url: str) -> bool:

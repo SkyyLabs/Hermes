@@ -27,15 +27,15 @@ The development CLI currently supports `help`, `chat <message>`,
 
 ```text
 > chat hello
-Local placeholder response: received 'hello' with 1 recent turn(s) in context.
+<local Ollama model response>
 ```
 
 Configuration defaults live in `configs/`; local overrides can be placed in `.env`.
 The default model config uses Ollama at `http://127.0.0.1:11434` with `gemma3`.
 Start Ollama and pull the configured local model before using chat, or set
 `LOCAL_MAC_AGENT_MODEL__MODEL_NAME` in `.env` to another local Ollama model.
-Set `LOCAL_MAC_AGENT_MODEL__PROVIDER=placeholder` only when a deterministic test
-or development response is preferred over real model output.
+If Ollama is unavailable, chat reports that no LLM is configured instead of
+generating a synthetic reply.
 
 Voice transcript routing speaks the chat response through macOS TTS:
 

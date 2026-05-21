@@ -32,3 +32,25 @@ def test_context_loads_core_memory_and_writes_delta(tmp_path: Path) -> None:
     assert persisted["conversation_id"] == "default"
     assert persisted["recent_turn_count"] == 1
     assert delta["memory_files"] == list(CORE_MEMORY_FILES)
+
+
+def test_context_ignores_legacy_placeholder_assistant_turns(tmp_path: Path) -> None:
+    memory_dir = tmp_path / "memory"
+    _write_memory_files(memory_dir)
+    store = ConversationStore(tmp_path / "state" / "conversations.jsonl")
+    store.append_turn("default", "user", "hello")
+    store.append_turn(
+        "default",
+        "assistant",
+        "Local placeholder response: received 'hello' with 1 recent turn(s) in context.",
+    )
+    builder = ChatContextBuilder(
+        memory_dir,
+        store,
+        tmp_path / "state" / "context_deltas.jsonl",
+    )
+
+    context = builder.build("default")
+
+    assert [turn["role"] for turn in context["recent_turns"]] == ["user"]
+    assert "Local placeholder response:" not in context["prompt"]
