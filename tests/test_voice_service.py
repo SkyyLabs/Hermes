@@ -56,10 +56,14 @@ class _Wake:
     def __init__(self, values: list[bool]) -> None:
         self.values = values
         self.seen = []
+        self.reset_calls = 0
 
     def detected(self, audio: bytes) -> bool:
         self.seen.append(audio)
         return self.values.pop(0) if self.values else False
+
+    def reset(self) -> None:
+        self.reset_calls += 1
 
 
 class _VAD:
@@ -183,6 +187,40 @@ def test_listener_returns_to_wake_after_active_silence_timeout() -> None:
     service.listen_forever()
 
     assert len(wake.seen) == 2
+    assert wake.reset_calls == 2
+
+
+def test_listener_returns_to_wake_after_completed_turn_timeout() -> None:
+    settings = VoiceSettings(
+        frame_ms=100,
+        utterance_silence_seconds=0.1,
+        active_listening_seconds=1.0,
+    )
+    microphone = _Microphone(
+        [
+            _frame(0),
+            _frame(1200),
+            _frame(0),
+            _frame(0),
+            _frame(0),
+        ]
+    )
+    wake = _Wake([True, False])
+    service = VoiceService(
+        _Chat(),
+        settings,
+        microphone=microphone,
+        wake_detector=wake,
+        vad=_VAD([True, False]),
+        stt=_STT(["first"]),
+        tts=_TTS(),
+        clock=_Clock([0.0, 0.1, 0.2, 2.0]),
+    )
+
+    service.listen_forever()
+
+    assert len(wake.seen) == 2
+    assert wake.reset_calls == 2
 
 
 def test_listener_recovers_after_empty_stt_turn() -> None:
@@ -216,6 +254,7 @@ def test_listener_recovers_after_empty_stt_turn() -> None:
 
     assert stt.calls == 1
     assert len(wake.seen) == 2
+    assert wake.reset_calls == 2
 
 
 def test_webrtc_vad_splits_microphone_chunks_into_supported_frames(monkeypatch) -> None:

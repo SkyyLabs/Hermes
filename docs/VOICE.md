@@ -9,7 +9,8 @@ and speaks the assistant reply through the macOS `say` command.
 After a spoken reply, the conversation remains active for a short configurable
 silence window. Follow-up speech inside that window is transcribed without
 requiring another wake phrase. When that window expires, the listener returns to
-waiting for `Hey Mycroft`.
+waiting for `Hey Mycroft`. The listener prints state transitions when it opens a
+follow-up window and when it returns to wake-word mode.
 If STT cannot produce a transcript for a captured voice turn, the turn is skipped
 and the listener returns to wake-word mode instead of shutting down.
 

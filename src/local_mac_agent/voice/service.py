@@ -33,6 +33,8 @@ class TextToSpeech(Protocol):
 class WakeWordDetector(Protocol):
     def detected(self, audio: bytes) -> bool: ...
 
+    def reset(self) -> None: ...
+
 
 class VoiceActivityDetector(Protocol):
     def contains_speech(self, audio: bytes) -> bool: ...
@@ -103,6 +105,9 @@ class OpenWakeWordDetector:
 
         scores = self.model.predict(np.frombuffer(audio, dtype=np.int16))
         return float(scores.get(self.wake_word, 0.0)) >= self.threshold
+
+    def reset(self) -> None:
+        self.model.reset()
 
 
 class WhisperSpeechToText:
@@ -248,10 +253,14 @@ class VoiceService:
         for frame in frames:
             if active_until is None:
                 if detector.detected(frame):
+                    detector.reset()
                     active_until = self.clock() + self.settings.active_listening_seconds
+                    print("\nVoice state: active follow-up window opened.")
                 continue
             if self.clock() > active_until:
+                detector.reset()
                 active_until = None
+                print("\nVoice state: waiting for Hey Mycroft.")
                 continue
             if not vad.contains_speech(frame):
                 continue
@@ -266,7 +275,9 @@ class VoiceService:
                 )
             except RuntimeError as exc:
                 print(f"\nVoice turn skipped: {exc}")
+                detector.reset()
                 active_until = None
+                print("\nVoice state: waiting for Hey Mycroft.")
                 continue
             timings = {
                 "capture_utterance": capture_ms,
@@ -276,6 +287,10 @@ class VoiceService:
             print(f"\n{format_latency_report('voice', timings)}")
             if turn.transcript:
                 active_until = self.clock() + self.settings.active_listening_seconds
+                print(
+                    "\nVoice state: active follow-up window reopened "
+                    f"for {self.settings.active_listening_seconds:.1f}s."
+                )
 
     def _process_audio(self, audio: bytes, conversation_id: str) -> VoiceTurn:
         turn_start = self.timing_clock()
