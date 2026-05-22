@@ -18,6 +18,10 @@ but it still routes through the same voice service and performs TTS. That keeps 
 manual fallback for transcript routing and deterministic verification.
 Typed messages and spoken messages use the same default conversation ID and the
 same `ChatService` instance, so recent context carries across text and audio.
+Each completed voice request prints a latency breakdown. Transcript mode shows
+chat and TTS timing. Live microphone turns add utterance capture and Whisper STT
+timing before the nested chat timing fields, then print the end-to-end voice
+total after speech output completes.
 
 ## Boundaries
 

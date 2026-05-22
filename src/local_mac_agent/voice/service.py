@@ -12,6 +12,7 @@ from wave import open as open_wave
 
 from local_mac_agent.chat.service import DEFAULT_CONVERSATION_ID
 from local_mac_agent.settings import VoiceSettings
+from local_mac_agent.timing import elapsed_ms, format_latency_report
 
 
 class ChatResponder(Protocol):
@@ -38,6 +39,7 @@ class WakeWordDetector(Protocol):
 class VoiceTurn:
     transcript: str
     response: str
+    timings: dict[str, float]
 
 
 class SoundDeviceMicrophone:
@@ -165,6 +167,7 @@ class VoiceService:
         stt: SpeechToText | None = None,
         tts: TextToSpeech | None = None,
         clock=monotonic,
+        timing_clock=monotonic,
     ) -> None:
         self.chat_service = chat_service
         self.settings = settings
@@ -173,13 +176,34 @@ class VoiceService:
         self.stt = stt or WhisperSpeechToText(settings)
         self.tts = tts or MacOSTextToSpeech(settings)
         self.clock = clock
+        self.timing_clock = timing_clock
 
     def process_transcript(
         self, transcript: str, conversation_id: str = DEFAULT_CONVERSATION_ID
     ) -> str:
-        response = self.chat_service.chat(transcript, conversation_id=conversation_id)
+        return self.process_transcript_turn(transcript, conversation_id).response
+
+    def process_transcript_turn(
+        self, transcript: str, conversation_id: str = DEFAULT_CONVERSATION_ID
+    ) -> VoiceTurn:
+        total_start = self.timing_clock()
+        chat_start = self.timing_clock()
+        chat_turn = getattr(self.chat_service, "chat_turn", None)
+        if chat_turn is None:
+            response = self.chat_service.chat(transcript, conversation_id=conversation_id)
+            timings = {"chat": elapsed_ms(chat_start, self.timing_clock())}
+        else:
+            result = chat_turn(transcript, conversation_id=conversation_id)
+            response = result.response
+            timings = {
+                f"chat_{name}": duration for name, duration in result.timings.items()
+            }
+
+        tts_start = self.timing_clock()
         self.tts.speak(response)
-        return response
+        timings["tts"] = elapsed_ms(tts_start, self.timing_clock())
+        timings["total"] = elapsed_ms(total_start, self.timing_clock())
+        return VoiceTurn(transcript=transcript, response=response, timings=timings)
 
     def listen_forever(self, conversation_id: str = DEFAULT_CONVERSATION_ID) -> None:
         detector = self.wake_detector or OpenWakeWordDetector(self.settings)
@@ -198,21 +222,42 @@ class VoiceService:
             if not _has_speech(frame, self.settings.speech_threshold):
                 continue
             try:
+                voice_start = self.timing_clock()
+                capture_start = self.timing_clock()
+                audio = _capture_utterance(frame, frames, self.settings)
+                capture_ms = elapsed_ms(capture_start, self.timing_clock())
                 turn = self._process_audio(
-                    _capture_utterance(frame, frames, self.settings),
+                    audio,
                     conversation_id,
                 )
             except RuntimeError as exc:
                 print(f"\nVoice turn skipped: {exc}")
                 active_until = None
                 continue
+            timings = {
+                "capture_utterance": capture_ms,
+                **turn.timings,
+                "total": elapsed_ms(voice_start, self.timing_clock()),
+            }
+            print(f"\n{format_latency_report('voice', timings)}")
             if turn.transcript:
                 active_until = self.clock() + self.settings.active_listening_seconds
 
     def _process_audio(self, audio: bytes, conversation_id: str) -> VoiceTurn:
+        turn_start = self.timing_clock()
+        stt_start = self.timing_clock()
         transcript = self.stt.transcribe(audio)
-        response = self.process_transcript(transcript, conversation_id)
-        return VoiceTurn(transcript=transcript, response=response)
+        stt_ms = elapsed_ms(stt_start, self.timing_clock())
+        turn = self.process_transcript_turn(transcript, conversation_id)
+        return VoiceTurn(
+            transcript=turn.transcript,
+            response=turn.response,
+            timings={
+                "stt": stt_ms,
+                **turn.timings,
+                "total": elapsed_ms(turn_start, self.timing_clock()),
+            },
+        )
 
 
 def _capture_utterance(first_frame: bytes, frames: Iterator[bytes], settings: VoiceSettings) -> bytes:

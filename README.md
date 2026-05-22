@@ -28,6 +28,7 @@ The development CLI accepts plain typed messages plus `help`,
 ```text
 > hello
 <local Ollama model response>
+Latency chat | store_user: ... ms | build_context: ... ms | llm: ... ms | total: ... ms
 ```
 
 Configuration defaults live in `configs/`; local overrides can be placed in `.env`.
@@ -60,3 +61,7 @@ review them before redistribution.
 Voice defaults to Whisper `tiny.en` and a short trailing-silence cutoff for
 lower latency. Override `LOCAL_MAC_AGENT_VOICE__WHISPER_MODEL` for a larger model
 when accuracy matters more than response speed.
+Each completed typed or spoken request prints a local latency breakdown. Typed
+chat isolates persistence, context build, model response, event logging, and
+context-delta writes. Voice transcript mode adds TTS; live microphone turns also
+show utterance capture and STT time.

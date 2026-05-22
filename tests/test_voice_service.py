@@ -88,6 +88,16 @@ def test_transcript_routes_to_chat_and_tts_with_conversation_id() -> None:
     assert tts.spoken == ["reply:hello"]
 
 
+def test_transcript_turn_reports_chat_tts_and_total_latencies() -> None:
+    service = VoiceService(_Chat(), VoiceSettings(), tts=_TTS())
+
+    turn = service.process_transcript_turn("hello")
+
+    assert turn.response == "reply:hello"
+    assert list(turn.timings) == ["chat", "tts", "total"]
+    assert all(duration >= 0 for duration in turn.timings.values())
+
+
 def test_capture_utterance_stops_after_trailing_silence() -> None:
     settings = VoiceSettings(frame_ms=100, utterance_silence_seconds=0.2)
     audio = _capture_utterance(

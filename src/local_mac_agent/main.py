@@ -8,6 +8,7 @@ from local_mac_agent.chat.service import ChatService
 from local_mac_agent.paths import RuntimePaths
 from local_mac_agent.safety import SafetyGuard
 from local_mac_agent.settings import load_settings
+from local_mac_agent.timing import format_latency_report
 from local_mac_agent.voice.service import VoiceService
 
 
@@ -73,7 +74,9 @@ def main() -> None:
             transcript = command.removeprefix("voice transcript ").strip()
             if transcript:
                 try:
-                    print(voice_service.process_transcript(transcript))
+                    turn = voice_service.process_transcript_turn(transcript)
+                    print(turn.response)
+                    print(format_latency_report("voice transcript", turn.timings))
                 except RuntimeError as exc:
                     print(f"Voice failed: {exc}")
             else:
@@ -94,7 +97,9 @@ def _start_wake_listener(voice_service: VoiceService) -> None:
 
 def _print_chat_reply(chat_service: ChatService, message: str) -> None:
     try:
-        print(chat_service.chat(message))
+        turn = chat_service.chat_turn(message)
+        print(turn.response)
+        print(format_latency_report("chat", turn.timings))
     except RuntimeError as exc:
         print(f"Chat failed: {exc}")
 

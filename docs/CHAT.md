@@ -13,6 +13,11 @@ is instructed not to draft or update memory from ordinary conversation. Prior
 turns are passed as chat history, and the newest typed or spoken turn is always
 sent as the final user message to the model.
 
+After each typed CLI request, chat prints a local latency line for the turn. It
+separates user-turn storage, context construction, model response, assistant-turn
+storage, event logging, context-delta write, and total elapsed time so the model
+call can be compared with local bookkeeping.
+
 The default provider is Ollama on a loopback URL with `gemma3` configured in
 `configs/model.yaml`. Ollama must be running locally and the configured model must
 be available. If no supported LLM is configured or Ollama is unavailable, chat

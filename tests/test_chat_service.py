@@ -38,6 +38,23 @@ def test_chat_service_persists_turns_logs_and_context_delta(tmp_path: Path) -> N
     assert delta_record["source"] == "chat_turn"
 
 
+def test_chat_turn_reports_step_latencies(tmp_path: Path) -> None:
+    paths = _create_paths(tmp_path)
+    turn = ChatService(paths, llm=_LLM()).chat_turn("time this")
+
+    assert turn.response.startswith("test response:")
+    assert list(turn.timings) == [
+        "store_user",
+        "build_context",
+        "llm",
+        "store_assistant",
+        "log_event",
+        "context_delta",
+        "total",
+    ]
+    assert all(duration >= 0 for duration in turn.timings.values())
+
+
 def test_test_chat_service_stays_local(tmp_path: Path, monkeypatch) -> None:
     paths = _create_paths(tmp_path)
 
