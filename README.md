@@ -45,11 +45,12 @@ Voice transcript routing speaks the chat response through macOS TTS:
 ```
 
 Wake listening starts with the CLI. Say `Hey Mycroft` to use the microphone,
-openWakeWord, and local Whisper STT. Typed text and spoken turns share the same
-default conversation context, so they can be mixed freely. Install the voice
-dependencies, allow microphone access for the terminal or app running
-LocalMacAgent, make the local Whisper model available, download the openWakeWord
-built-in models when needed, and keep Ollama running for chat responses:
+openWakeWord, local WebRTC VAD utterance detection, and local Whisper STT. Typed
+text and spoken turns share the same default conversation context, so they can be
+mixed freely. Install the voice dependencies, allow microphone access for the
+terminal or app running LocalMacAgent, make the local Whisper model available,
+download the openWakeWord built-in models when needed, and keep Ollama running
+for chat responses:
 
 ```bash
 python -c "import openwakeword; openwakeword.utils.download_models(['hey_mycroft'])"
@@ -65,3 +66,6 @@ Each completed typed or spoken request prints a local latency breakdown. Typed
 chat isolates persistence, context build, model response, event logging, and
 context-delta writes. Voice transcript mode adds TTS; live microphone turns also
 show utterance capture and STT time.
+WebRTC VAD mode defaults to `2`; tune `LOCAL_MAC_AGENT_VOICE__VAD_MODE` between
+`0` and `3` if your microphone environment cuts off speech or accepts too much
+non-speech.

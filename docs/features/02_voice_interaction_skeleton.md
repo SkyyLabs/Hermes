@@ -4,7 +4,7 @@
 
 - Real microphone listen path for macOS started with the CLI
 - Built-in openWakeWord `Hey Mycroft` activation
-- Silence-bounded local utterance capture
+- WebRTC VAD-bounded local utterance capture
 - Local Whisper STT adapter
 - Transcript routing into `ChatService` with conversation ID preservation
 - macOS `say` TTS output

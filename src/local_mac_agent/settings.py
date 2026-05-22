@@ -47,7 +47,8 @@ class VoiceSettings(BaseModel):
     whisper_model: str = "tiny.en"
     sample_rate: int = 16000
     frame_ms: int = 80
-    speech_threshold: int = 350
+    vad_mode: int = 2
+    vad_frame_ms: int = 20
     utterance_silence_seconds: float = 0.45
     active_listening_seconds: float = 4.0
     max_utterance_seconds: float = 20.0

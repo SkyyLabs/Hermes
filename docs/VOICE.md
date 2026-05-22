@@ -2,9 +2,9 @@
 
 Phase 2 provides the local voice interaction path for macOS. The CLI starts
 listening when it starts, waits for openWakeWord `Hey Mycroft`, captures an
-utterance until trailing silence, transcribes the captured audio with local
-Whisper, routes the transcript through `ChatService`, and speaks the assistant
-reply through the macOS `say` command.
+utterance until trailing silence detected by local WebRTC VAD, transcribes the
+captured audio with local Whisper, routes the transcript through `ChatService`,
+and speaks the assistant reply through the macOS `say` command.
 
 After a spoken reply, the conversation remains active for a short configurable
 silence window. Follow-up speech inside that window is transcribed without
@@ -27,6 +27,10 @@ total after speech output completes.
 
 - Microphone capture uses `sounddevice` and requires macOS microphone permission.
 - Wake detection uses openWakeWord's built-in `hey_mycroft` model.
+- Utterance capture uses local WebRTC VAD instead of raw amplitude thresholds to
+  decide whether microphone chunks still contain speech. The detector splits the
+  existing microphone chunks into WebRTC VAD frames and exposes its aggressiveness
+  mode through `vad_mode`; higher modes reject more non-speech but may clip speech.
 - The macOS listener uses openWakeWord ONNX model assets. Download the built-in
   `hey_mycroft` assets with
   `python -c "import openwakeword; openwakeword.utils.download_models(['hey_mycroft'])"`

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import subprocess
-from array import array
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,6 +32,10 @@ class TextToSpeech(Protocol):
 
 class WakeWordDetector(Protocol):
     def detected(self, audio: bytes) -> bool: ...
+
+
+class VoiceActivityDetector(Protocol):
+    def contains_speech(self, audio: bytes) -> bool: ...
 
 
 @dataclass(frozen=True)
@@ -155,6 +158,34 @@ class MacOSTextToSpeech:
             raise RuntimeError("macOS TTS failed.") from exc
 
 
+class WebRtcVoiceActivityDetector:
+    """Local speech/non-speech detector backed by WebRTC VAD."""
+
+    def __init__(self, settings: VoiceSettings) -> None:
+        try:
+            import webrtcvad
+        except ImportError as exc:
+            raise RuntimeError(
+                "Voice activity detection requires the webrtcvad-wheels package."
+            ) from exc
+
+        if settings.vad_frame_ms not in {10, 20, 30}:
+            raise ValueError("WebRTC VAD frames must be 10, 20, or 30 ms.")
+        self.sample_rate = settings.sample_rate
+        self.frame_bytes = int(
+            settings.sample_rate * settings.vad_frame_ms / 1000
+        ) * 2
+        self.vad = webrtcvad.Vad(settings.vad_mode)
+
+    def contains_speech(self, audio: bytes) -> bool:
+        frames = []
+        for start in range(0, len(audio), self.frame_bytes):
+            frame = audio[start : start + self.frame_bytes]
+            if len(frame) == self.frame_bytes:
+                frames.append(frame)
+        return any(self.vad.is_speech(frame, self.sample_rate) for frame in frames)
+
+
 class VoiceService:
     """Coordinate wake detection, STT, chat routing, TTS, and session timing."""
 
@@ -164,6 +195,7 @@ class VoiceService:
         settings: VoiceSettings,
         microphone: Microphone | None = None,
         wake_detector: WakeWordDetector | None = None,
+        vad: VoiceActivityDetector | None = None,
         stt: SpeechToText | None = None,
         tts: TextToSpeech | None = None,
         clock=monotonic,
@@ -173,6 +205,7 @@ class VoiceService:
         self.settings = settings
         self.microphone = microphone or SoundDeviceMicrophone(settings)
         self.wake_detector = wake_detector
+        self.vad = vad
         self.stt = stt or WhisperSpeechToText(settings)
         self.tts = tts or MacOSTextToSpeech(settings)
         self.clock = clock
@@ -207,6 +240,7 @@ class VoiceService:
 
     def listen_forever(self, conversation_id: str = DEFAULT_CONVERSATION_ID) -> None:
         detector = self.wake_detector or OpenWakeWordDetector(self.settings)
+        vad = self.vad or WebRtcVoiceActivityDetector(self.settings)
         if isinstance(self.stt, WhisperSpeechToText):
             self.stt.prepare()
         frames = self.microphone.frames()
@@ -219,12 +253,12 @@ class VoiceService:
             if self.clock() > active_until:
                 active_until = None
                 continue
-            if not _has_speech(frame, self.settings.speech_threshold):
+            if not vad.contains_speech(frame):
                 continue
             try:
                 voice_start = self.timing_clock()
                 capture_start = self.timing_clock()
-                audio = _capture_utterance(frame, frames, self.settings)
+                audio = _capture_utterance(frame, frames, self.settings, vad)
                 capture_ms = elapsed_ms(capture_start, self.timing_clock())
                 turn = self._process_audio(
                     audio,
@@ -260,7 +294,12 @@ class VoiceService:
         )
 
 
-def _capture_utterance(first_frame: bytes, frames: Iterator[bytes], settings: VoiceSettings) -> bytes:
+def _capture_utterance(
+    first_frame: bytes,
+    frames: Iterator[bytes],
+    settings: VoiceSettings,
+    vad: VoiceActivityDetector,
+) -> bytes:
     captured = [first_frame]
     frame_seconds = settings.frame_ms / 1000
     silence = 0.0
@@ -268,7 +307,7 @@ def _capture_utterance(first_frame: bytes, frames: Iterator[bytes], settings: Vo
     for frame in frames:
         captured.append(frame)
         elapsed += frame_seconds
-        if _has_speech(frame, settings.speech_threshold):
+        if vad.contains_speech(frame):
             silence = 0.0
         else:
             silence += frame_seconds
@@ -277,14 +316,6 @@ def _capture_utterance(first_frame: bytes, frames: Iterator[bytes], settings: Vo
         if elapsed >= settings.max_utterance_seconds:
             break
     return b"".join(captured)
-
-
-def _has_speech(audio: bytes, threshold: int) -> bool:
-    samples = array("h")
-    samples.frombytes(audio)
-    if not samples:
-        return False
-    return max(abs(sample) for sample in samples) >= threshold
 
 
 def _write_wav(path: str | Path, audio: bytes, sample_rate: int) -> None:

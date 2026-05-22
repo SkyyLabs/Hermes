@@ -6,3 +6,4 @@ numpy
 sounddevice
 openai-whisper
 openwakeword
+webrtcvad-wheels

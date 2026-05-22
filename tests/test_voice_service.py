@@ -5,7 +5,11 @@ from local_mac_agent.chat.service import ChatService
 from local_mac_agent.main import HELP_TEXT
 from local_mac_agent.paths import RuntimePaths
 from local_mac_agent.settings import VoiceSettings
-from local_mac_agent.voice.service import VoiceService, _capture_utterance
+from local_mac_agent.voice.service import (
+    VoiceService,
+    WebRtcVoiceActivityDetector,
+    _capture_utterance,
+)
 
 
 def _frame(value: int, samples: int = 16) -> bytes:
@@ -58,6 +62,16 @@ class _Wake:
         return self.values.pop(0) if self.values else False
 
 
+class _VAD:
+    def __init__(self, values: list[bool]) -> None:
+        self.values = values
+        self.seen = []
+
+    def contains_speech(self, audio: bytes) -> bool:
+        self.seen.append(audio)
+        return self.values.pop(0) if self.values else False
+
+
 class _Microphone:
     def __init__(self, frames: list[bytes]) -> None:
         self._frames = frames
@@ -104,6 +118,7 @@ def test_capture_utterance_stops_after_trailing_silence() -> None:
         _frame(1000),
         iter([_frame(900), _frame(0), _frame(0), _frame(800)]),
         settings,
+        _VAD([True, False, False]),
     )
 
     assert audio == b"".join([_frame(1000), _frame(900), _frame(0), _frame(0)])
@@ -126,6 +141,7 @@ def test_listener_uses_microphone_wake_stt_and_active_follow_up() -> None:
         ]
     )
     wake = _Wake([True])
+    vad = _VAD([False, True, False, True, False])
     stt = _STT(["first", "follow up"])
     chat = _Chat()
     tts = _TTS()
@@ -134,6 +150,7 @@ def test_listener_uses_microphone_wake_stt_and_active_follow_up() -> None:
         settings,
         microphone=microphone,
         wake_detector=wake,
+        vad=vad,
         stt=stt,
         tts=tts,
         clock=_Clock([0.0, 0.1, 0.2, 0.3, 0.4, 0.5]),
@@ -157,6 +174,7 @@ def test_listener_returns_to_wake_after_active_silence_timeout() -> None:
         settings,
         microphone=microphone,
         wake_detector=wake,
+        vad=_VAD([]),
         stt=_STT([]),
         tts=_TTS(),
         clock=_Clock([0.0, 2.0]),
@@ -188,6 +206,7 @@ def test_listener_recovers_after_empty_stt_turn() -> None:
         settings,
         microphone=microphone,
         wake_detector=wake,
+        vad=_VAD([True, False]),
         stt=stt,
         tts=_TTS(),
         clock=_Clock([0.0, 0.1]),
@@ -197,6 +216,27 @@ def test_listener_recovers_after_empty_stt_turn() -> None:
 
     assert stt.calls == 1
     assert len(wake.seen) == 2
+
+
+def test_webrtc_vad_splits_microphone_chunks_into_supported_frames(monkeypatch) -> None:
+    seen = []
+
+    class _WebRtcVad:
+        def __init__(self, mode: int) -> None:
+            assert mode == 2
+
+        def is_speech(self, frame: bytes, sample_rate: int) -> bool:
+            seen.append((len(frame), sample_rate))
+            return False
+
+    class _WebRtcModule:
+        Vad = _WebRtcVad
+
+    monkeypatch.setitem(__import__("sys").modules, "webrtcvad", _WebRtcModule)
+    detector = WebRtcVoiceActivityDetector(VoiceSettings(frame_ms=80, vad_frame_ms=20))
+
+    assert detector.contains_speech(_frame(0, samples=1280)) is False
+    assert seen == [(640, 16000)] * 4
 
 
 def test_cli_help_keeps_chat_classify_and_voice_commands() -> None:

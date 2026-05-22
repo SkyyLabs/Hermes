@@ -19,6 +19,8 @@ def test_load_settings_uses_safe_defaults(tmp_path: Path) -> None:
     assert settings.voice.wake_word == "hey_mycroft"
     assert settings.voice.sample_rate == 16000
     assert settings.voice.whisper_model == "tiny.en"
+    assert settings.voice.vad_mode == 2
+    assert settings.voice.vad_frame_ms == 20
     assert settings.voice.utterance_silence_seconds == 0.45
     assert settings.safety.cloud_apis_enabled is False
 

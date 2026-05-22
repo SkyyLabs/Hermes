@@ -17,6 +17,7 @@ dependencies = [
   "sounddevice",
   "openai-whisper",
   "openwakeword",
+  "webrtcvad-wheels",
 ]
 
 [project.optional-dependencies]
